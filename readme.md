@@ -7,7 +7,7 @@ When you init a datastruct you will be able to passed a function ptr to a alloca
 when NULL is pass it will use malloc/free and quicksort
 
 TODO:
-- [ ] Dynamic Array
+- [x] Dynamic Array
 - [ ] Linked List
 - [ ] Stack
 - [ ] Queue
