@@ -1,11 +1,20 @@
 #include <check.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "containers.h"
 
 
-START_TEST(example_test)
+START_TEST(container_init_test)
 {
+        Con_Dynamic_Array example = init_dynamic_array(sizeof(int), NULL, NULL, NULL);
+        ck_assert_int_eq(example.Block_Size, sizeof(int));
+        ck_assert_ptr_eq(example.alloctaor.general_allocator, malloc);
+        
+        // failed init
+        example = init_dynamic_array(1, NULL, NULL, &example);
+        ck_assert_int_eq(example.Block_Size, 0);
+
 } END_TEST
 
 
@@ -17,7 +26,7 @@ Suite *container_test_suite()
         s = suite_create("container_tests");
         tc = tcase_create("Core");
 
-        tcase_add_test(tc, example_test);
+        tcase_add_test(tc, container_init_test);
 
         suite_add_tcase(s, tc);
 
