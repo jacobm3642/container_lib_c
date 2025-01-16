@@ -9,6 +9,20 @@ typedef void *Specific_Allocator(size_t blob_size, void *allocator_struct);
 typedef void General_Deallocator(void *ptr);
 typedef void Specific_Deallocator(void *ptr, void *allocator_struct);
 
+union Alloctaor {
+        General_Allocator *general_allocator;
+        Specific_Allocator *specific_allocator;
+} Alloctaor;
+
+union Dealloctaor {
+        General_Deallocator *general_deallocator;
+        Specific_Deallocator *specific_deallocator;
+} Dealloctaor;
+
+/*
+ * ---- Dynamic array ----
+ * */
+
 typedef struct Con_Dynamic_Array {
         size_t Block_Size;
         size_t Max_Items;
@@ -16,16 +30,9 @@ typedef struct Con_Dynamic_Array {
         size_t sequential_access_count;
 
         bool use_general_allocator;
-
-        union alloctaor {
-                General_Allocator *general_allocator;
-                Specific_Allocator *specific_allocator;
-        } alloctaor;
-
-        union dealloctaor {
-                General_Deallocator *general_deallocator;
-                Specific_Deallocator *specific_deallocator;
-        } dealloctaor;
+        
+        union Alloctaor alloctaor;
+        union Dealloctaor dealloctaor;
 
         void *allocator_struct;
 
@@ -41,5 +48,30 @@ void reset_sequential_access_dynamic_array(Con_Dynamic_Array *target);
 void *sequential_access_dynamic_array(Con_Dynamic_Array *target);
 void *random_access_dynamic_array(size_t index, Con_Dynamic_Array *target);
 int find_dynamic_array(void *pattern, Con_Dynamic_Array *target); 
+
+/* 
+ * Linked List
+ * */
+
+typedef struct Con_Linked_List_Node {
+        struct Con_Linked_List_Node *next;
+        struct Con_Linked_List_Node *prev;
+        void *data;
+} Con_Linked_List_Node;
+
+typedef struct Con_Linked_List {
+        
+        Con_Linked_List_Node *head;
+        Con_Linked_List_Node *sequential_access_ptr;
+        long long count;
+        
+        union Alloctaor alloctaor;
+        union Dealloctaor dealloctaor;
+        
+        void *allocator_struct;
+
+        bool use_general_allocator;
+        bool vaild; 
+} Con_Linked_List;
 
 #endif // !CONTAINERS_H

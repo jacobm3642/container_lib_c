@@ -1,5 +1,6 @@
 #include "containers.h"
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -61,7 +62,7 @@ Con_Dynamic_Array init_dynamic_array(size_t Block_size, void *alloc_funtion, voi
         return new_dynarray;
 }
 
-void *use_allocator(size_t size, Con_Dynamic_Array *target)
+void *use_allocator_dy(size_t size, Con_Dynamic_Array *target)
 {
         if (target->use_general_allocator) {
                 return target->alloctaor.general_allocator(size);
@@ -70,7 +71,7 @@ void *use_allocator(size_t size, Con_Dynamic_Array *target)
         }
 }
 
-void use_deallocator(void *ptr, Con_Dynamic_Array *target)
+void use_deallocator_dy(void *ptr, Con_Dynamic_Array *target)
 {
         if (target->use_general_allocator) {
                 target->dealloctaor.general_deallocator(ptr);
@@ -82,10 +83,10 @@ void use_deallocator(void *ptr, Con_Dynamic_Array *target)
 void dynamic_array_insert(void *data, size_t size_of_data, Con_Dynamic_Array *target)
 {
         if (target->Max_Items == target->Cur_Items) {
-                void *new_blob = use_allocator(target->Max_Items*2, target);
+                void *new_blob = use_allocator_dy(target->Max_Items*2, target);
 
                 memcpy(new_blob, target->blob, target->Block_Size * target->Cur_Items);
-                use_deallocator(target->blob, target);
+                use_deallocator_dy(target->blob, target);
                 
                 target->Max_Items = target->Max_Items*2;
                 target->blob = new_blob;
@@ -145,3 +146,88 @@ int find_dynamic_array(void *pattern, Con_Dynamic_Array *target)
 }
 
 // sort isnt being inplmented at this point
+
+
+/* 
+ * Linked List
+ * */
+
+void *use_allocator_ll(size_t size, Con_Linked_List *target)
+{
+        if (target->use_general_allocator) {
+                return target->alloctaor.general_allocator(size);
+        } else {
+                return target->alloctaor.specific_allocator(size, target->allocator_struct);
+        }
+}
+
+void use_deallocator_ll(void *ptr, Con_Linked_List *target)
+{
+        if (target->use_general_allocator) {
+                target->dealloctaor.general_deallocator(ptr);
+        } else {
+                target->dealloctaor.specific_deallocator(ptr, target->allocator_struct);
+        }
+}
+
+Con_Linked_List init_linked_list(void *alloc_funtion, void *free_function, void *allocator_struct)
+{
+        Con_Linked_List new_linked_list = {.head = (void *)0, .vaild = true, .sequential_access_ptr = (void *)0, .use_general_allocator = true};
+        if (alloc_funtion == NULL && free_function == NULL && allocator_struct == NULL) {
+                new_linked_list.alloctaor.general_allocator = malloc;
+                new_linked_list.dealloctaor.general_deallocator = free;
+
+        } else if (alloc_funtion != NULL && free_function != NULL && allocator_struct == NULL){
+                if (allocator_struct == NULL) {
+                        new_linked_list.alloctaor.general_allocator = alloc_funtion;
+                        new_linked_list.dealloctaor.specific_deallocator = free_function;
+                
+                } else {
+                        new_linked_list.use_general_allocator = false;
+                        new_linked_list.alloctaor.specific_allocator = alloc_funtion;
+                        new_linked_list.dealloctaor.specific_deallocator = free_function;
+                        new_linked_list.allocator_struct = allocator_struct;
+                }
+        } else {
+                Con_Linked_List failed_output = {.vaild = false};
+                return failed_output;
+        }
+
+        return new_linked_list;
+}
+
+void recersive_insert_linked_list(Con_Linked_List_Node *node, Con_Linked_List_Node *cur_ptr, int position, Con_Linked_List *target)
+{
+        if (target->head == (void *)0 && position == 0) { 
+                target->head = node;
+                target->sequential_access_ptr = target->head;
+                return;
+        }
+        if (cur_ptr == (void *)0 || position < 0) {
+                return;
+        }
+        if (position == 0) {
+                node->next = cur_ptr->next;
+                if (cur_ptr->next != (void *)0) {
+                        cur_ptr->next->prev = node;
+                }
+                node->prev = cur_ptr;
+                cur_ptr->next = node;
+                return;
+        }
+        recersive_insert_linked_list(node, cur_ptr->next, position-1, target);
+        return;
+}
+
+void insert_linked_list(void *data, int position, Con_Linked_List *target)
+{
+        if (position == -1) position = target->count;
+        Con_Linked_List_Node *new_node = (Con_Linked_List_Node *)use_allocator_ll(sizeof(Con_Linked_List_Node), target);
+        recersive_insert_linked_list(new_node, target->head, position, target);
+}
+
+
+void remove_linked_list(int position, Con_Linked_List *target)
+{
+        assert(1 == 2);
+}
