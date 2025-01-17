@@ -111,6 +111,57 @@ START_TEST(find_dynamic_array_test)
         ck_assert_int_eq(found_index, 1);
 } END_TEST
 
+START_TEST(insert_linked_list_test)
+{
+        Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
+        int data1 = 69, data2 = 420;
+        insert_linked_list(&data1, -1, &example);
+        insert_linked_list(&data2, -1, &example);
+        insert_linked_list(&data1, -1, &example);
+
+        ck_assert_int_eq(*(int *)example.head->next->next->data, data1);
+} END_TEST
+
+START_TEST(remove_linked_list_test)
+{
+        Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
+        int data1 = 69, data2 = 420;
+        insert_linked_list(&data1, -1, &example);
+        insert_linked_list(&data2, -1, &example);
+        insert_linked_list(&data1, -1, &example);
+
+        remove_linked_list(1, &example);
+
+        ck_assert_int_eq(*(int *)example.head->next->prev->data, data1);
+} END_TEST
+
+START_TEST(random_access_linked_list_test)
+{
+        Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
+        int data1 = 69, data2 = 420;
+        insert_linked_list(&data1, -1, &example);
+        insert_linked_list(&data2, -1, &example);
+        insert_linked_list(&data1, -1, &example);
+
+        ck_assert_int_eq(*(int *)random_access_linked_list(0, &example), data1);
+        ck_assert_int_eq(*(int *)random_access_linked_list(1, &example), data2);
+        ck_assert_int_eq(*(int *)random_access_linked_list(2, &example), data1);
+} END_TEST
+
+START_TEST(sequential_access_linked_list_test)
+{
+        Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
+        int data1 = 69, data2 = 420;
+        insert_linked_list(&data1, -1, &example);
+        insert_linked_list(&data2, -1, &example);
+        insert_linked_list(&data1, -1, &example);
+
+        ck_assert_int_eq(*(int *)sequential_access_linked_list(&example), data1);
+        ck_assert_int_eq(*(int *)sequential_access_linked_list(&example), data2);
+        ck_assert_int_eq(*(int *)sequential_access_linked_list(&example), data1);
+        ck_assert_ptr_eq(sequential_access_linked_list(&example), (void *)0);
+        reset_sequential_access_linked_list(&example);
+} END_TEST
 
 Suite *container_test_suite()
 {
@@ -128,6 +179,10 @@ Suite *container_test_suite()
         tcase_add_test(tc, sequential_access_dynamic_array_test);
         tcase_add_test(tc, random_access_dynamic_array_test);
         tcase_add_test(tc, find_dynamic_array_test);
+        tcase_add_test(tc, insert_linked_list_test);
+        tcase_add_test(tc, remove_linked_list_test);
+        tcase_add_test(tc, random_access_linked_list_test);
+        tcase_add_test(tc, sequential_access_dynamic_array_test);
 
         suite_add_tcase(s, tc);
 

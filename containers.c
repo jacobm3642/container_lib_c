@@ -1,7 +1,9 @@
 #include "containers.h"
 
 #include <assert.h>
+#include <math.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -145,6 +147,11 @@ int find_dynamic_array(void *pattern, Con_Dynamic_Array *target)
         return index;
 }
 
+void free_dymanic_array(Con_Dynamic_Array *target)
+{
+        use_deallocator_dy(target->blob, target);
+}
+
 // sort isnt being inplmented at this point
 
 
@@ -172,7 +179,7 @@ void use_deallocator_ll(void *ptr, Con_Linked_List *target)
 
 Con_Linked_List init_linked_list(void *alloc_funtion, void *free_function, void *allocator_struct)
 {
-        Con_Linked_List new_linked_list = {.head = (void *)0, .vaild = true, .sequential_access_ptr = (void *)0, .use_general_allocator = true};
+        Con_Linked_List new_linked_list = {.head = (void *)0, .vaild = true, .sequential_access_ptr = (void *)0, .use_general_allocator = true, .count = 0};
         if (alloc_funtion == NULL && free_function == NULL && allocator_struct == NULL) {
                 new_linked_list.alloctaor.general_allocator = malloc;
                 new_linked_list.dealloctaor.general_deallocator = free;
@@ -198,19 +205,14 @@ Con_Linked_List init_linked_list(void *alloc_funtion, void *free_function, void 
 
 void recersive_insert_linked_list(Con_Linked_List_Node *node, Con_Linked_List_Node *cur_ptr, int position, Con_Linked_List *target)
 {
-        if (target->head == (void *)0 && position == 0) { 
-                target->head = node;
-                target->sequential_access_ptr = target->head;
-                return;
-        }
         if (cur_ptr == (void *)0 || position < 0) {
                 return;
         }
-        if (position == 0) {
-                node->next = cur_ptr->next;
+        if (position == 0 && cur_ptr != (void *)0) {
                 if (cur_ptr->next != (void *)0) {
                         cur_ptr->next->prev = node;
                 }
+                node->next = cur_ptr->next;
                 node->prev = cur_ptr;
                 cur_ptr->next = node;
                 return;
@@ -222,12 +224,84 @@ void recersive_insert_linked_list(Con_Linked_List_Node *node, Con_Linked_List_No
 void insert_linked_list(void *data, int position, Con_Linked_List *target)
 {
         if (position == -1) position = target->count;
+        
         Con_Linked_List_Node *new_node = (Con_Linked_List_Node *)use_allocator_ll(sizeof(Con_Linked_List_Node), target);
+        new_node->data = data;
+        new_node->next = (void *)0;
+        new_node->prev = (void *)0;
+
+        if (target->head == (void *)0 && position == 0) { 
+                target->head = new_node;
+                target->sequential_access_ptr = target->head;
+                return;
+        } else if (position == 0) {
+                new_node->next = target->head;
+                target->head->prev = new_node;
+                target->head = new_node;
+                return;
+        }
+
+        if (position != 0) position--;
         recersive_insert_linked_list(new_node, target->head, position, target);
+        target->count++;
 }
 
+void recersive_remove_linked_list(int position, Con_Linked_List_Node *cur_ptr, Con_Linked_List *target)
+{
+        if (position < 0 || target == (void *)0 || cur_ptr == (void *)0) {
+                return;
+        }
+        if (position == 0) {
+                if (cur_ptr->prev != (void *)0) {
+                        cur_ptr->prev->next = cur_ptr->next;
+                }
+                if (cur_ptr->next != (void *)0) { 
+                        cur_ptr->next->prev = cur_ptr->prev;
+                }
+                use_deallocator_ll(cur_ptr, target);
+                return;
+        }
+        recersive_remove_linked_list(position-1, cur_ptr->next, target);
+}
 
 void remove_linked_list(int position, Con_Linked_List *target)
 {
-        assert(1 == 2);
+        recersive_remove_linked_list(position, target->head, target);
+}
+
+void *recersive_random_access_linked_list(int position, Con_Linked_List_Node *cur_ptr, Con_Linked_List *target)
+{
+        if (position < 0 || target == (void *)0 || cur_ptr == (void *)0) {
+                return (void *)0;
+        }
+        if (position == 0) {
+                return cur_ptr->data;
+        }
+        return recersive_random_access_linked_list(position-1, cur_ptr->next, target);
+
+}
+void *random_access_linked_list(int position, Con_Linked_List *target)
+{
+        return recersive_random_access_linked_list(position, target->head, target);
+}
+
+void *sequential_access_linked_list(Con_Linked_List *target)
+{
+        void *out = (void *)0;
+        if (target->sequential_access_ptr == (void *)0) {
+                return out;
+        }
+        out = target->sequential_access_ptr->data;
+        target->sequential_access_ptr = target->sequential_access_ptr->next;
+        return out;
+}
+
+void reset_sequential_access_linked_list(Con_Linked_List *target) 
+{
+        target->sequential_access_ptr = target->head;
+}
+
+void free_linked_list(Con_Linked_List *target)
+{
+        assert(1==3);
 }

@@ -74,4 +74,11 @@ typedef struct Con_Linked_List {
         bool vaild; 
 } Con_Linked_List;
 
+Con_Linked_List init_linked_list(void *alloc_funtion, void *free_function, void *allocator_struct);
+void insert_linked_list(void *data, int position, Con_Linked_List *target);
+void remove_linked_list(int position, Con_Linked_List *target);
+void *random_access_linked_list(int position, Con_Linked_List *target);
+void *sequential_access_linked_list(Con_Linked_List *target);
+void reset_sequential_access_linked_list(Con_Linked_List *target);
+
 #endif // !CONTAINERS_H
