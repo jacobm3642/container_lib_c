@@ -1,7 +1,6 @@
 #include "containers.h"
 
 #include <assert.h>
-#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +63,7 @@ Con_Dynamic_Array init_dynamic_array(size_t Block_size, void *alloc_funtion, voi
         return new_dynarray;
 }
 
+// private (should only be used within this translation unit)
 void *use_allocator_dy(size_t size, Con_Dynamic_Array *target)
 {
         if (target->use_general_allocator) {
@@ -73,6 +73,7 @@ void *use_allocator_dy(size_t size, Con_Dynamic_Array *target)
         }
 }
 
+// private (should only be used within this translation unit)
 void use_deallocator_dy(void *ptr, Con_Dynamic_Array *target)
 {
         if (target->use_general_allocator) {
@@ -120,6 +121,7 @@ void *sequential_access_dynamic_array(Con_Dynamic_Array *target)
 {
         void *out_ptr = target->blob + ((target->sequential_access_count) * target->Block_Size);
         if(target->sequential_access_count > target->Max_Items) {
+                reset_sequential_access_dynamic_array(target);
                 return (void *)0;
         }
         target->sequential_access_count++;
@@ -159,6 +161,7 @@ void free_dymanic_array(Con_Dynamic_Array *target)
  * Linked List
  * */
 
+// private (should only be used within this translation unit)
 void *use_allocator_ll(size_t size, Con_Linked_List *target)
 {
         if (target->use_general_allocator) {
@@ -168,6 +171,7 @@ void *use_allocator_ll(size_t size, Con_Linked_List *target)
         }
 }
 
+// private (should only be used within this translation unit)
 void use_deallocator_ll(void *ptr, Con_Linked_List *target)
 {
         if (target->use_general_allocator) {
@@ -177,6 +181,7 @@ void use_deallocator_ll(void *ptr, Con_Linked_List *target)
         }
 }
 
+// private (should only be used within this translation unit)
 void remove_node_ll(Con_Linked_List_Node *cur_ptr, Con_Linked_List * target)
 {
 
@@ -189,6 +194,7 @@ void remove_node_ll(Con_Linked_List_Node *cur_ptr, Con_Linked_List * target)
         use_deallocator_ll(cur_ptr, target);
 }
 
+// private (should only be used within this translation unit)
 void add_node_ll(Con_Linked_List_Node *node, Con_Linked_List_Node *cur_ptr)
 {
 
@@ -200,6 +206,7 @@ void add_node_ll(Con_Linked_List_Node *node, Con_Linked_List_Node *cur_ptr)
                 cur_ptr->next = node;
 }
 
+// private (should only be used within this translation unit)
 Con_Linked_List_Node *make_new_node(void *data, Con_Linked_List *target)
 {
         Con_Linked_List_Node *new_node = (Con_Linked_List_Node *)use_allocator_ll(sizeof(Con_Linked_List_Node), target);
@@ -235,9 +242,11 @@ Con_Linked_List init_linked_list(void *alloc_funtion, void *free_function, void 
         return new_linked_list;
 }
 
+// private (should only be used within this translation unit)
 void recersive_insert_linked_list(Con_Linked_List_Node *node, Con_Linked_List_Node *cur_ptr, int position, Con_Linked_List *target)
 {
         if (cur_ptr == (void *)0 || position < 0) {
+                assert(1==3);
                 return;
         }
         if (position == 0 && cur_ptr != (void *)0) {
@@ -250,7 +259,7 @@ void recersive_insert_linked_list(Con_Linked_List_Node *node, Con_Linked_List_No
 
 void insert_linked_list(void *data, int position, Con_Linked_List *target)
 {
-        if (position < 0) position = target->count + position + 1;
+        if (position == -1) position = target->count;// bugged dont use
         Con_Linked_List_Node *new_node = make_new_node(data, target);
 
         if (target->head == (void *)0 && position == 0) { 
@@ -261,6 +270,7 @@ void insert_linked_list(void *data, int position, Con_Linked_List *target)
                 new_node->next = target->head;
                 target->head->prev = new_node;
                 target->head = new_node;
+                target->count++;
                 return;
         }
 
@@ -269,6 +279,7 @@ void insert_linked_list(void *data, int position, Con_Linked_List *target)
         target->count++;
 }
 
+// private (should only be used within this translation unit)
 void recersive_remove_linked_list(int position, Con_Linked_List_Node *cur_ptr, Con_Linked_List *target)
 {
         if (position < 0 || target == (void *)0 || cur_ptr == (void *)0) {
@@ -276,6 +287,7 @@ void recersive_remove_linked_list(int position, Con_Linked_List_Node *cur_ptr, C
         }
         if (position == 0) {
                 remove_node_ll(cur_ptr, target);
+                target->count--;
                 return;
         }
         recersive_remove_linked_list(position-1, cur_ptr->next, target);
@@ -283,10 +295,11 @@ void recersive_remove_linked_list(int position, Con_Linked_List_Node *cur_ptr, C
 
 void remove_linked_list(int position, Con_Linked_List *target)
 {
-        if (position < 0) position = target->count + position + 1;
+        if (position == -1) position = target->count -1; // bugged dont use
         recersive_remove_linked_list(position, target->head, target);
 }
 
+// private (should only be used within this translation unit)
 void *recersive_random_access_linked_list(int position, Con_Linked_List_Node *cur_ptr, Con_Linked_List *target)
 {
         if (position < 0 || target == (void *)0 || cur_ptr == (void *)0) {
@@ -304,10 +317,16 @@ void *random_access_linked_list(int position, Con_Linked_List *target)
         return recersive_random_access_linked_list(position, target->head, target);
 }
 
+void reset_sequential_access_linked_list(Con_Linked_List *target) 
+{
+        target->sequential_access_ptr = target->head;
+}
+
 void *sequential_access_linked_list(Con_Linked_List *target)
 {
         void *out = (void *)0;
         if (target->sequential_access_ptr == (void *)0) {
+                reset_sequential_access_linked_list(target);
                 return out;
         }
         out = target->sequential_access_ptr->data;
@@ -315,11 +334,7 @@ void *sequential_access_linked_list(Con_Linked_List *target)
         return out;
 }
 
-void reset_sequential_access_linked_list(Con_Linked_List *target) 
-{
-        target->sequential_access_ptr = target->head;
-}
-
+// private (should only be used within this translation unit)
 void recersive_free_linked_list(Con_Linked_List_Node *node, Con_Linked_List *target)
 {
         if (node == (void *)0) {

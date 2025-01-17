@@ -126,9 +126,9 @@ START_TEST(remove_linked_list_test)
 {
         Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
         int data1 = 69, data2 = 420;
-        insert_linked_list(&data1, -1, &example);
-        insert_linked_list(&data2, -1, &example);
-        insert_linked_list(&data1, -1, &example);
+        insert_linked_list(&data1, 0, &example);
+        insert_linked_list(&data2, 1, &example);
+        insert_linked_list(&data1, 2, &example);
 
         remove_linked_list(1, &example);
 
@@ -139,9 +139,9 @@ START_TEST(random_access_linked_list_test)
 {
         Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
         int data1 = 69, data2 = 420;
-        insert_linked_list(&data1, -1, &example);
-        insert_linked_list(&data2, -1, &example);
-        insert_linked_list(&data1, -1, &example);
+        insert_linked_list(&data1, 0, &example);
+        insert_linked_list(&data2, 1, &example);
+        insert_linked_list(&data1, 2, &example);
 
         ck_assert_int_eq(*(int *)random_access_linked_list(0, &example), data1);
         ck_assert_int_eq(*(int *)random_access_linked_list(1, &example), data2);
@@ -160,7 +160,6 @@ START_TEST(sequential_access_linked_list_test)
         ck_assert_int_eq(*(int *)sequential_access_linked_list(&example), data2);
         ck_assert_int_eq(*(int *)sequential_access_linked_list(&example), data1);
         ck_assert_ptr_eq(sequential_access_linked_list(&example), (void *)0);
-        reset_sequential_access_linked_list(&example);
 } END_TEST
 
 START_TEST(push_stack_test)
