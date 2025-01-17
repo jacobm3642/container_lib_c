@@ -163,6 +163,20 @@ START_TEST(sequential_access_linked_list_test)
         reset_sequential_access_linked_list(&example);
 } END_TEST
 
+START_TEST(push_stack_test)
+{
+        Con_Stack example = init_stack(NULL, NULL, NULL);
+        int data1 = 69, data2 = 420;
+
+        push_stack(&data1, &example);
+        push_stack(&data2, &example);
+
+        ck_assert_int_eq(*(int *)example.tail_node->data, data2);
+        
+        push_stack(&data1, &example);
+        ck_assert_int_eq(*(int *)example.tail_node->data, data1);
+} END_TEST
+
 Suite *container_test_suite()
 {
         Suite *s;
@@ -183,6 +197,8 @@ Suite *container_test_suite()
         tcase_add_test(tc, remove_linked_list_test);
         tcase_add_test(tc, random_access_linked_list_test);
         tcase_add_test(tc, sequential_access_dynamic_array_test);
+        tcase_add_test(tc, push_stack_test);
+        
 
         suite_add_tcase(s, tc);
 

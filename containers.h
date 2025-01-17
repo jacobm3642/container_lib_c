@@ -48,6 +48,7 @@ void reset_sequential_access_dynamic_array(Con_Dynamic_Array *target);
 void *sequential_access_dynamic_array(Con_Dynamic_Array *target);
 void *random_access_dynamic_array(size_t index, Con_Dynamic_Array *target);
 int find_dynamic_array(void *pattern, Con_Dynamic_Array *target); 
+void free_dymanic_array(Con_Dynamic_Array *target);
 
 /* 
  * Linked List
@@ -80,5 +81,19 @@ void remove_linked_list(int position, Con_Linked_List *target);
 void *random_access_linked_list(int position, Con_Linked_List *target);
 void *sequential_access_linked_list(Con_Linked_List *target);
 void reset_sequential_access_linked_list(Con_Linked_List *target);
+void free_linked_list(Con_Linked_List *target);
 
+/*
+ * Stack 
+ * */
+
+typedef struct Con_Stack {
+        Con_Linked_List linked_list;
+        Con_Linked_List_Node *tail_node;
+        bool vaild;
+} Con_Stack;
+
+Con_Stack init_stack(void *alloc_funtion, void *free_function, void *allocator_struct);
+void push_stack(void *data, Con_Stack *target);
+void *pop_stack(Con_Stack *target);
 #endif // !CONTAINERS_H
