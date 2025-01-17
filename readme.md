@@ -8,7 +8,7 @@ when NULL is pass it will use malloc/free and quicksort
 
 TODO:
 - [x] Dynamic Array
-- [ ] Linked List
+- [x] Linked List
 - [ ] Stack
 - [ ] Queue
 - [ ] Deque
