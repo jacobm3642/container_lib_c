@@ -96,4 +96,19 @@ typedef struct Con_Stack {
 Con_Stack init_stack(void *alloc_funtion, void *free_function, void *allocator_struct);
 void push_stack(void *data, Con_Stack *target);
 void *pop_stack(Con_Stack *target);
+
+/*
+ * Queue 
+ * */
+
+typedef enum {linked_list, array} Queue_Type;
+
+typedef struct Con_Queue {
+        Queue_Type underlaying_data_type;
+        union underlaying_data {
+                Con_Linked_List linked_list;
+                Con_Dynamic_Array array;
+        };
+} Con_Queue;
+
 #endif // !CONTAINERS_H

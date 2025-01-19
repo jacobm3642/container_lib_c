@@ -385,3 +385,9 @@ void *pop_stack(Con_Stack *target)
         remove_node_ll(old_tail, &target->linked_list);
         return out_data;
 }
+
+/*
+ * queue
+ * */
+
+
