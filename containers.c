@@ -40,13 +40,18 @@ Con_Dynamic_Array init_dynamic_array(size_t Block_size, void *alloc_funtion, voi
 
         } else if (alloc_funtion != NULL && free_function != NULL && allocator_struct == NULL){
                 if (allocator_struct == NULL) {
-                        new_dynarray.alloctaor.general_allocator = alloc_funtion;
-                        new_dynarray.dealloctaor.specific_deallocator = free_function;
+                        General_Allocator *alloc_funtion_fn = alloc_funtion;
+                        General_Deallocator *free_function_fn = free_function;
+                        
+                        new_dynarray.alloctaor.general_allocator = alloc_funtion_fn;
+                        new_dynarray.dealloctaor.general_deallocator = free_function_fn;
                 
                 } else {
+                        Specific_Allocator *alloc_funtion_fn = alloc_funtion;
+                        Specific_Deallocator *free_function_fn = free_function;
                         new_dynarray.use_general_allocator = false;
-                        new_dynarray.alloctaor.specific_allocator = alloc_funtion;
-                        new_dynarray.dealloctaor.specific_deallocator = free_function;
+                        new_dynarray.alloctaor.specific_allocator = alloc_funtion_fn;
+                        new_dynarray.dealloctaor.specific_deallocator = free_function_fn;
                         new_dynarray.allocator_struct = allocator_struct;
                 }
         } else {
@@ -225,13 +230,19 @@ Con_Linked_List init_linked_list(void *alloc_funtion, void *free_function, void 
 
         } else if (alloc_funtion != NULL && free_function != NULL && allocator_struct == NULL){
                 if (allocator_struct == NULL) {
-                        new_linked_list.alloctaor.general_allocator = alloc_funtion;
-                        new_linked_list.dealloctaor.specific_deallocator = free_function;
+                        General_Allocator *alloc_funtion_fn = alloc_funtion;
+                        General_Deallocator *free_function_fn = free_function;
+                        
+                        new_linked_list.alloctaor.general_allocator = alloc_funtion_fn;
+                        new_linked_list.dealloctaor.general_deallocator = free_function_fn;
                 
                 } else {
+                        Specific_Allocator *alloc_funtion_fn = alloc_funtion;
+                        Specific_Deallocator *free_function_fn = free_function;
+                        
                         new_linked_list.use_general_allocator = false;
-                        new_linked_list.alloctaor.specific_allocator = alloc_funtion;
-                        new_linked_list.dealloctaor.specific_deallocator = free_function;
+                        new_linked_list.alloctaor.specific_allocator = alloc_funtion_fn;
+                        new_linked_list.dealloctaor.specific_deallocator = free_function_fn;
                         new_linked_list.allocator_struct = allocator_struct;
                 }
         } else {

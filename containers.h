@@ -108,7 +108,7 @@ typedef struct Con_Queue {
         union underlaying_data {
                 Con_Linked_List linked_list;
                 Con_Dynamic_Array array;
-        };
+        } underlaying_data;
 } Con_Queue;
 
 #endif // !CONTAINERS_H
