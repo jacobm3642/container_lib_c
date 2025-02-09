@@ -401,4 +401,10 @@ void *pop_stack(Con_Stack *target)
  * queue
  * */
 
-
+Con_Queue init_queue(size_t known_size, void *alloc_funtion, void *free_function, void *allocator_struct)
+{
+        Con_Queue new_queue = {0};
+        if (known > 0) {
+                new_queue.
+        }
+}
