@@ -12,12 +12,12 @@ typedef void Specific_Deallocator(void *ptr, void *allocator_struct);
 union Alloctaor {
         General_Allocator *general_allocator;
         Specific_Allocator *specific_allocator;
-} Alloctaor;
+};
 
 union Dealloctaor {
         General_Deallocator *general_deallocator;
         Specific_Deallocator *specific_deallocator;
-} Dealloctaor;
+};
 
 /*
  * ---- Dynamic array ----
