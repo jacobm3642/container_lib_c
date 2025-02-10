@@ -7,6 +7,22 @@
 #include <stdbool.h>
 #include <string.h>
 #include <strings.h>
+#include <stdint.h>
+
+uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) 
+{
+        size_t i = 0;
+        uint32_t hash = 0;
+        while (i != length) {
+                hash += key[i++];
+                hash += hash << 10;
+                hash ^= hash >> 6;
+        }
+        hash += hash << 3;
+        hash ^= hash >> 11;
+        hash += hash << 15;
+        return hash;
+}
 
 /*
  * ---- Dynamic array ----
@@ -33,7 +49,7 @@
 Con_Dynamic_Array init_dynamic_array(size_t Block_size, void *alloc_funtion, void *free_function, void *allocator_struct)
 {
         Con_Dynamic_Array new_dynarray = {.Block_Size = Block_size,.sequential_access_count = 0, .use_general_allocator = true, .Cur_Items = 0, .Max_Items = 1};
-        
+
         if (alloc_funtion == NULL && free_function == NULL && allocator_struct == NULL) {
                 new_dynarray.alloctaor.general_allocator = malloc;
                 new_dynarray.dealloctaor.general_deallocator = free;
@@ -42,10 +58,10 @@ Con_Dynamic_Array init_dynamic_array(size_t Block_size, void *alloc_funtion, voi
                 if (allocator_struct == NULL) {
                         General_Allocator *alloc_funtion_fn = alloc_funtion;
                         General_Deallocator *free_function_fn = free_function;
-                        
+
                         new_dynarray.alloctaor.general_allocator = alloc_funtion_fn;
                         new_dynarray.dealloctaor.general_deallocator = free_function_fn;
-                
+
                 } else {
                         Specific_Allocator *alloc_funtion_fn = alloc_funtion;
                         Specific_Deallocator *free_function_fn = free_function;
@@ -58,7 +74,7 @@ Con_Dynamic_Array init_dynamic_array(size_t Block_size, void *alloc_funtion, voi
                 Con_Dynamic_Array failed_output = {0};
                 return failed_output;
         }
-        
+
         if (new_dynarray.use_general_allocator) {
                 new_dynarray.blob = new_dynarray.alloctaor.general_allocator(new_dynarray.Block_Size);
         } else {
@@ -95,7 +111,7 @@ void dynamic_array_insert(void *data, size_t size_of_data, Con_Dynamic_Array *ta
 
                 memcpy(new_blob, target->blob, target->Block_Size * target->Cur_Items);
                 use_deallocator_dy(target->blob, target);
-                
+
                 target->Max_Items = target->Max_Items*2;
                 target->blob = new_blob;
         }
@@ -109,11 +125,11 @@ void dynamic_array_insert(void *data, size_t size_of_data, Con_Dynamic_Array *ta
 void dynamic_array_remove(size_t index, Con_Dynamic_Array *target)
 {
         if (index <= target->Cur_Items) {
-        memmove(target->blob + (target->Block_Size * index), 
-                target->blob + (target->Block_Size * (index + 1)), 
-                (target->Cur_Items - index - 1) * target->Block_Size);
+                memmove(target->blob + (target->Block_Size * index), 
+                        target->blob + (target->Block_Size * (index + 1)), 
+                        (target->Cur_Items - index - 1) * target->Block_Size);
 
-        target->Cur_Items--;
+                target->Cur_Items--;
         }
 }
 
@@ -189,7 +205,9 @@ void use_deallocator_ll(void *ptr, Con_Linked_List *target)
 // private (should only be used within this translation unit)
 void remove_node_ll(Con_Linked_List_Node *cur_ptr, Con_Linked_List * target)
 {
-
+        if (cur_ptr == target->head) {
+                target->head = cur_ptr->next;
+        }
         if (cur_ptr->prev != (void *)0) {
                 cur_ptr->prev->next = cur_ptr->next;
         }
@@ -197,18 +215,18 @@ void remove_node_ll(Con_Linked_List_Node *cur_ptr, Con_Linked_List * target)
                 cur_ptr->next->prev = cur_ptr->prev;
         }
         use_deallocator_ll(cur_ptr, target);
+        target->count--;
 }
 
 // private (should only be used within this translation unit)
 void add_node_ll(Con_Linked_List_Node *node, Con_Linked_List_Node *cur_ptr)
 {
-
-                if (cur_ptr->next != (void *)0) {
-                        cur_ptr->next->prev = node;
-                }
-                node->next = cur_ptr->next;
-                node->prev = cur_ptr;
-                cur_ptr->next = node;
+        if (cur_ptr->next != (void *)0) {
+                cur_ptr->next->prev = node;
+        }
+        node->next = cur_ptr->next;
+        node->prev = cur_ptr;
+        cur_ptr->next = node;
 }
 
 // private (should only be used within this translation unit)
@@ -232,14 +250,14 @@ Con_Linked_List init_linked_list(void *alloc_funtion, void *free_function, void 
                 if (allocator_struct == NULL) {
                         General_Allocator *alloc_funtion_fn = alloc_funtion;
                         General_Deallocator *free_function_fn = free_function;
-                        
+
                         new_linked_list.alloctaor.general_allocator = alloc_funtion_fn;
                         new_linked_list.dealloctaor.general_deallocator = free_function_fn;
-                
+
                 } else {
                         Specific_Allocator *alloc_funtion_fn = alloc_funtion;
                         Specific_Deallocator *free_function_fn = free_function;
-                        
+
                         new_linked_list.use_general_allocator = false;
                         new_linked_list.alloctaor.specific_allocator = alloc_funtion_fn;
                         new_linked_list.dealloctaor.specific_deallocator = free_function_fn;
@@ -256,12 +274,17 @@ Con_Linked_List init_linked_list(void *alloc_funtion, void *free_function, void 
 // private (should only be used within this translation unit)
 void recersive_insert_linked_list(Con_Linked_List_Node *node, Con_Linked_List_Node *cur_ptr, int position, Con_Linked_List *target)
 {
-        if (cur_ptr == (void *)0 || position < 0) {
-                assert(1==3);
+        if (position < 0) {
+                return;
+        }
+        if (cur_ptr->next == NULL && position == 1) {
+                add_node_ll(node, cur_ptr);
+                target->count++;
                 return;
         }
         if (position == 0 && cur_ptr != (void *)0) {
                 add_node_ll(node, cur_ptr);
+                target->count++;
                 return;
         }
         recersive_insert_linked_list(node, cur_ptr->next, position-1, target);
@@ -276,6 +299,7 @@ void insert_linked_list(void *data, int position, Con_Linked_List *target)
         if (target->head == (void *)0 && position == 0) { 
                 target->head = new_node;
                 target->sequential_access_ptr = target->head;
+                target->count++;
                 return;
         } else if (position == 0) {
                 new_node->next = target->head;
@@ -298,7 +322,6 @@ void recersive_remove_linked_list(int position, Con_Linked_List_Node *cur_ptr, C
         }
         if (position == 0) {
                 remove_node_ll(cur_ptr, target);
-                target->count--;
                 return;
         }
         recersive_remove_linked_list(position-1, cur_ptr->next, target);
@@ -306,7 +329,7 @@ void recersive_remove_linked_list(int position, Con_Linked_List_Node *cur_ptr, C
 
 void remove_linked_list(int position, Con_Linked_List *target)
 {
-        if (position == -1) position = target->count -1; // bugged dont use
+        if (target->count == 0) return;
         recersive_remove_linked_list(position, target->head, target);
 }
 
@@ -404,7 +427,7 @@ void *pop_stack(Con_Stack *target)
 Con_Queue init_queue(void *alloc_funtion, void *free_function, void *allocator_struct)
 {
         // array type not implemeted rn 
-        Con_Queue new_queue = {0};
+        Con_Queue new_queue = {.end_node = NULL};
         new_queue.underlaying_data_type = linked_list;
         new_queue.underlaying_data.linked_list = init_linked_list(alloc_funtion, free_function, allocator_struct);
         new_queue.end_node = new_queue.underlaying_data.linked_list.head;
@@ -434,3 +457,9 @@ void *pop_queue(Con_Queue *queue)
         }
         return out;
 }
+
+/*
+ * Dictionary
+ * */
+
+

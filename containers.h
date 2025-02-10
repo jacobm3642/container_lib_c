@@ -64,7 +64,7 @@ typedef struct Con_Linked_List {
         
         Con_Linked_List_Node *head;
         Con_Linked_List_Node *sequential_access_ptr;
-        int count;
+        unsigned int count;
         
         union Alloctaor alloctaor;
         union Dealloctaor dealloctaor;

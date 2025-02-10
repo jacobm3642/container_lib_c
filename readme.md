@@ -10,7 +10,7 @@ TODO:
 - [x] Dynamic Array
 - [x] Linked List
 - [x] Stack
-- [ ] Queue
+- [x] Queue
 - [ ] Deque
 - [ ] Priority Queue
 - [ ] Tree

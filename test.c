@@ -127,6 +127,10 @@ START_TEST(remove_linked_list_test)
         Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
         int data1 = 69, data2 = 420;
         insert_linked_list(&data1, 0, &example);
+        remove_linked_list(0, &example);
+        ck_assert_ptr_eq(example.head, NULL);
+
+        insert_linked_list(&data1, 0, &example);
         insert_linked_list(&data2, 1, &example);
         insert_linked_list(&data1, 2, &example);
 
@@ -171,10 +175,115 @@ START_TEST(push_stack_test)
         push_stack(&data2, &example);
 
         ck_assert_int_eq(*(int *)example.tail_node->data, data2);
-        
+
         push_stack(&data1, &example);
         ck_assert_int_eq(*(int *)example.tail_node->data, data1);
 } END_TEST
+
+// Mocking memory allocation functions
+void *custom_alloc(size_t size) {
+        return malloc(size);
+}
+
+void custom_free(void *ptr) {
+        free(ptr);
+}
+
+// Test suite for the queue functionality
+START_TEST(test_queue_initially_empty) {
+        // Initialize the queue
+        Con_Queue queue = init_queue(custom_alloc, custom_free, NULL);
+
+        // Assert that the queue is empty
+        ck_assert_ptr_eq(queue.underlaying_data.linked_list.head, NULL);
+        ck_assert_ptr_eq(queue.end_node, NULL);
+}
+END_TEST
+
+START_TEST(test_enqueue_single_item) {
+        // Initialize the queue
+        Con_Queue queue = init_queue(custom_alloc, custom_free, NULL);
+
+        // Enqueue a single item
+        int value = 42;
+        push_queue(&value, &queue);
+
+        // Check the queue after enqueue
+        ck_assert_ptr_ne(queue.underlaying_data.linked_list.head, NULL);  // Head should not be NULL after enqueue
+        ck_assert_ptr_ne(queue.end_node, NULL);  // End node should also not be NULL
+        ck_assert_int_eq(*(int *)queue.underlaying_data.linked_list.head->data, value);  // Check if value is enqueued correctly
+}
+END_TEST
+
+START_TEST(test_dequeue_single_item) {
+        // Initialize the queue
+        Con_Queue queue = init_queue(custom_alloc, custom_free, NULL);
+
+        // Enqueue a single item
+        int value = 42;
+        push_queue(&value, &queue);
+
+        // Dequeue the single item
+        int *dequeued_value = pop_queue(&queue);
+
+        // Check the dequeued value
+        ck_assert_int_eq(*dequeued_value, value);  // The value should match the enqueued value
+        ck_assert_ptr_eq(queue.underlaying_data.linked_list.head, NULL);  // Queue should be empty again
+        ck_assert_ptr_eq(queue.end_node, NULL);  // End node should be NULL after dequeue
+}
+END_TEST
+
+START_TEST(test_enqueue_multiple_items) {
+        // Initialize the queue
+        Con_Queue queue = init_queue(custom_alloc, custom_free, NULL);
+
+        // Enqueue multiple items
+        int value1 = 42, value2 = 13, value3 = 99;
+        push_queue(&value1, &queue);
+        push_queue(&value2, &queue);
+        push_queue(&value3, &queue);
+
+        // Check if the first value is enqueued correctly
+        ck_assert_int_eq(*(int *)queue.underlaying_data.linked_list.head->data, value1);
+
+        // Check if the last value is the last enqueued value
+        ck_assert_int_eq(*(int *)queue.end_node->data, value3);
+}
+END_TEST
+
+START_TEST(test_dequeue_multiple_items) {
+        // Initialize the queue
+        
+        Con_Queue queue = init_queue(custom_alloc, custom_free, NULL);
+
+        // Enqueue multiple items
+        int value1 = 42, value2 = 13, value3 = 99;
+        push_queue(&value1, &queue);
+        push_queue(&value2, &queue);
+        push_queue(&value3, &queue);
+
+        // Dequeue the first item
+        int *dequeued_value = pop_queue(&queue);
+        ck_assert_int_eq(*dequeued_value, value1);  // First item enqueued should be dequeued first
+
+        // Dequeue the second item
+        dequeued_value = pop_queue(&queue);
+        ck_assert_int_eq(*dequeued_value, value2);  // Second item enqueued should be dequeued second
+
+        // Dequeue the third item
+        dequeued_value = pop_queue(&queue);
+        ck_assert_int_eq(*dequeued_value, value3);  // Third item enqueued should be dequeued third
+}END_TEST
+
+START_TEST(test_dequeue_from_empty_queue) {
+        // Initialize the queue
+        Con_Queue queue = init_queue(custom_alloc, custom_free, NULL);
+
+        // Dequeue from an empty queue (should return NULL)
+        int *dequeued_value = pop_queue(&queue);
+        ck_assert_ptr_eq(dequeued_value, NULL);  // Queue should be empty, so return NULL
+}
+END_TEST
 
 Suite *container_test_suite()
 {
@@ -197,7 +306,12 @@ Suite *container_test_suite()
         tcase_add_test(tc, random_access_linked_list_test);
         tcase_add_test(tc, sequential_access_dynamic_array_test);
         tcase_add_test(tc, push_stack_test);
-        
+        tcase_add_test(tc, test_queue_initially_empty);
+        tcase_add_test(tc, test_enqueue_single_item);
+        tcase_add_test(tc, test_dequeue_single_item);
+        tcase_add_test(tc, test_enqueue_multiple_items);
+        tcase_add_test(tc, test_dequeue_multiple_items);
+        tcase_add_test(tc, test_dequeue_from_empty_queue);
 
         suite_add_tcase(s, tc);
 
