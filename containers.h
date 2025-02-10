@@ -109,6 +109,12 @@ typedef struct Con_Queue {
                 Con_Linked_List linked_list;
                 Con_Dynamic_Array array;
         } underlaying_data;
+
+        Con_Linked_List_Node *end_node;
 } Con_Queue;
+
+Con_Queue init_queue(void *alloc_funtion, void *free_function, void *allocator_struct);
+void push_queue(void *data, Con_Queue *queue);
+void *pop_queue(Con_Queue *queue);
 
 #endif // !CONTAINERS_H

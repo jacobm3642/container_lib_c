@@ -401,10 +401,36 @@ void *pop_stack(Con_Stack *target)
  * queue
  * */
 
-Con_Queue init_queue(size_t known_size, void *alloc_funtion, void *free_function, void *allocator_struct)
+Con_Queue init_queue(void *alloc_funtion, void *free_function, void *allocator_struct)
 {
+        // array type not implemeted rn 
         Con_Queue new_queue = {0};
-        if (known > 0) {
-                new_queue.
+        new_queue.underlaying_data_type = linked_list;
+        new_queue.underlaying_data.linked_list = init_linked_list(alloc_funtion, free_function, allocator_struct);
+        new_queue.end_node = new_queue.underlaying_data.linked_list.head;
+        return new_queue;
+}
+
+void push_queue(void *data, Con_Queue *queue)
+{
+        if (queue->underlaying_data.linked_list.head == (void *)0) {
+                insert_linked_list(data, 0, &queue->underlaying_data.linked_list);
+                queue->end_node = queue->underlaying_data.linked_list.head;
+                return;
         }
+
+        Con_Linked_List_Node *new_node = make_new_node(data, &queue->underlaying_data.linked_list);
+        add_node_ll(new_node, queue->end_node);
+        queue->end_node = new_node;
+        queue->underlaying_data.linked_list.count++;
+}
+
+void *pop_queue(Con_Queue *queue)
+{
+        void *out = random_access_linked_list(0, &queue->underlaying_data.linked_list);
+        remove_linked_list(0, &queue->underlaying_data.linked_list);
+        if (queue->underlaying_data.linked_list.head == (void *)0) {
+                queue->end_node = (void *)0;
+        }
+        return out;
 }
