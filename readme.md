@@ -1,4 +1,5 @@
 This is just a basic implementation of container datastructs so I can use it in other projects
+The main reason to make this is to allow a custom allocator and deallocator
 
 Every datastruct with have these operations
 Insert, Remove, Sequential access, Random access, Find, Sort
