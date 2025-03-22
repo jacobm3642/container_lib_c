@@ -117,4 +117,18 @@ Con_Queue init_queue(void *alloc_funtion, void *free_function, void *allocator_s
 void push_queue(void *data, Con_Queue *queue);
 void *pop_queue(Con_Queue *queue);
 
+/*
+ * Dictionary
+ * */
+
+struct key_value_pair {
+        char *key;
+        void *value;
+};
+
+typedef struct Con_Dictionary {
+        Con_Dynamic_Array array;
+        size_t count;
+} Con_Dictionary;
+
 #endif // !CONTAINERS_H

@@ -24,6 +24,10 @@ uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length)
         return hash;
 }
 
+#ifndef hash
+#define hash jenkins_one_at_a_time_hash
+#endif /* ifndef hash */
+
 /*
  * ---- Dynamic array ----
  * */
@@ -104,16 +108,25 @@ void use_deallocator_dy(void *ptr, Con_Dynamic_Array *target)
         }
 }
 
+void resize_array(Con_Dynamic_Array *target, size_t new_size)
+{
+        if (new_size <= target->Max_Items){
+                return;
+        }      
+
+        void *new_blob = use_allocator_dy(new_size, target);
+
+        memcpy(new_blob, target->blob, target->Block_Size * target->Cur_Items);
+        use_deallocator_dy(target->blob, target);
+
+        target->Max_Items = new_size;
+        target->blob = new_blob;
+}
+
 void dynamic_array_insert(void *data, size_t size_of_data, Con_Dynamic_Array *target)
 {
         if (target->Max_Items == target->Cur_Items) {
-                void *new_blob = use_allocator_dy(target->Max_Items*2, target);
-
-                memcpy(new_blob, target->blob, target->Block_Size * target->Cur_Items);
-                use_deallocator_dy(target->blob, target);
-
-                target->Max_Items = target->Max_Items*2;
-                target->blob = new_blob;
+                resize_array(target, target->Max_Items*2);
         }
 
         if (size_of_data == target->Block_Size) {
@@ -155,6 +168,15 @@ void *random_access_dynamic_array(size_t index, Con_Dynamic_Array *target)
                 return target->blob + (index * target->Block_Size);
         }
         return (void *)0;
+}
+
+void random_write_dynamic_array(void *value, size_t index, Con_Dynamic_Array * target)
+{
+        if (index >= target->Max_Items) {
+                return;
+        }
+        void *target_loc = (void *)(target->blob + (index * target->Block_Size));
+        memcpy(target_loc, value, target->Block_Size);
 }
 
 int find_dynamic_array(void *pattern, Con_Dynamic_Array *target) 
@@ -462,4 +484,10 @@ void *pop_queue(Con_Queue *queue)
  * Dictionary
  * */
 
-
+Con_Dictionary init_dictionary(int Max_Items, void *alloc_funtion, void *free_function, void *allocator_struct)
+{
+        Con_Dictionary new_dict = {0};
+        new_dict.array = init_dynamic_array(sizeof(struct key_value_pair),alloc_funtion, free_function, allocator_struct);
+        resize_array(&new_dict.array, Max_Items);
+        return new_dict;
+}
