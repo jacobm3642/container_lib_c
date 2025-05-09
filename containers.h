@@ -114,7 +114,7 @@ typedef struct Con_Queue {
         Con_Linked_List_Node *end_node;
 } Con_Queue;
 
-Con_Queue init_queue(size_t known_size, void *alloc_funtion, void *free_function, void *allocator_struct);
+Con_Queue init_queue(void *alloc_funtion, void *free_function, void *allocator_struct);
 void *peek_queue(Con_Queue *target);
 void free_queue(Con_Queue *target);
 void push_queue(void *data, Con_Queue *queue);

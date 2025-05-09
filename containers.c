@@ -221,27 +221,28 @@ void use_deallocator_ll(void *ptr, Con_Linked_List *target)
 }
 
 // private (should only be used within this translation unit)
-void remove_node_ll(Con_Linked_List_Node *cur_ptr, Con_Linked_List * target)
-{
-        if (cur_ptr == (void *)0) {
-                return;
-        }
+void remove_node_ll(Con_Linked_List_Node *cur_ptr, Con_Linked_List *target) {
+    if (target == NULL || cur_ptr == NULL) {
+        return;
+    }
 
-        if (cur_ptr == target->head) {
-                target->head = cur_ptr->next;
+    if (cur_ptr == target->head) {
+        target->head = cur_ptr->next;
+        if (target->head != NULL) {
+            target->head->prev = NULL;
         }
-        if (cur_ptr->prev != (void *)0) {
-                cur_ptr->prev->next = cur_ptr->next;
-        } else {
-                target->head = cur_ptr->next;
+        printf("head removed\n");
+    } else {
+        if (cur_ptr->prev != NULL) {
+            cur_ptr->prev->next = cur_ptr->next;
         }
+        if (cur_ptr->next != NULL) {
+            cur_ptr->next->prev = cur_ptr->prev;
+        }
+    }
 
-        if (cur_ptr->next != (void *)0) { 
-                cur_ptr->next->prev = cur_ptr->prev;
-        }
-
-        use_deallocator_ll(cur_ptr, target);
-        target->count--;
+    use_deallocator_ll(cur_ptr, target);
+    target->count--;
 }
 
 // private (should only be used within this translation unit)
@@ -328,6 +329,7 @@ void insert_linked_list(void *data, int position, Con_Linked_List *target)
 {
         if (position == -1) position = target->count;
         if (position < 0) return;
+        if ((size_t)position > target->count) return;
 
         Con_Linked_List_Node *new_node = make_new_node(data, target);
         if (new_node == (void *)0) return;
@@ -347,12 +349,7 @@ void insert_linked_list(void *data, int position, Con_Linked_List *target)
                 return;
         }
 
-        if (position > target->count) {
-                position = target->count;
-        }
-
         recersive_insert_linked_list(new_node, target->head, position - 1, target);
-        target->count++;
 }
 
 // private (should only be used within this translation unit)
@@ -367,13 +364,13 @@ void recersive_remove_linked_list(int position, Con_Linked_List_Node *cur_ptr, C
                 return;
         }
 
-        recersive_remove_linked_list(position-1, cur_ptr->next, target);
+        recersive_remove_linked_list(position, cur_ptr->next, target);
 }
 
 void remove_linked_list(int position, Con_Linked_List *target)
 {
         if (position == -1) position = target->count - 1;
-        if (position < 0 || position >= target->count) return;
+        if (position < 0 || (size_t) position >= target->count) return;
 
         if (position == 0) {
                 Con_Linked_List_Node *old_head = target->head;
@@ -383,10 +380,16 @@ void remove_linked_list(int position, Con_Linked_List *target)
                 }
                 use_deallocator_ll(old_head, target);
                 target->count--;
+                if (target->count == 0) {
+                      target->head = (void *)0;
+                }
                 return;
         }
 
-        if (target->count == 0) return;
+        if (target->count == 0) {
+              target->head = (void *)0;
+              return;
+        };
         recersive_remove_linked_list(position, target->head, target);
         target->count--;
 }
@@ -408,7 +411,7 @@ void *random_access_linked_list(int position, Con_Linked_List *target)
         if (position < 0 || target == (void *)0 || target->head == (void *)0) {
                 return (void *)0;
         }
-        if (position >= target->count) {
+        if ((size_t)position >= target->count) {
                 return (void *)0;
         }
         return recersive_random_access_linked_list(position, target->head, target);
@@ -520,6 +523,7 @@ void *pop_queue(Con_Queue *queue)
         }
         return out;
 }
+
 
 void *peek_queue(Con_Queue *target)
 {
