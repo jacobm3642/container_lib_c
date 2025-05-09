@@ -89,16 +89,25 @@ void use_deallocator_dy(void *ptr, Con_Dynamic_Array *target)
         }
 }
 
+void resize_array(Con_Dynamic_Array *target, size_t new_size)
+{
+        if (new_size <= target->Max_Items){
+                return;
+        }      
+
+        void *new_blob = use_allocator_dy(new_size, target);
+
+        memcpy(new_blob, target->blob, target->Block_Size * target->Cur_Items);
+        use_deallocator_dy(target->blob, target);
+
+        target->Max_Items = new_size;
+        target->blob = new_blob;
+}
+
 void dynamic_array_insert(void *data, size_t size_of_data, Con_Dynamic_Array *target)
 {
         if (target->Max_Items == target->Cur_Items) {
-                void *new_blob = use_allocator_dy(target->Max_Items*2, target);
-
-                memcpy(new_blob, target->blob, target->Block_Size * target->Cur_Items);
-                use_deallocator_dy(target->blob, target);
-
-                target->Max_Items = target->Max_Items*2;
-                target->blob = new_blob;
+                resize_array(target, target->Max_Items*2);
         }
 
         if (size_of_data == target->Block_Size) {
@@ -157,6 +166,15 @@ void *random_access_dynamic_array(size_t index, Con_Dynamic_Array *target)
         return (void *)0;
 }
 
+void random_write_dynamic_array(void *value, size_t index, Con_Dynamic_Array * target)
+{
+        if (index >= target->Max_Items) {
+                return;
+        }
+        void *target_loc = (void *)(target->blob + (index * target->Block_Size));
+        memcpy(target_loc, value, target->Block_Size);
+}
+
 int find_dynamic_array(void *pattern, Con_Dynamic_Array *target) 
 {
         int index = -1;
@@ -209,6 +227,9 @@ void remove_node_ll(Con_Linked_List_Node *cur_ptr, Con_Linked_List * target)
                 return;
         }
 
+        if (cur_ptr == target->head) {
+                target->head = cur_ptr->next;
+        }
         if (cur_ptr->prev != (void *)0) {
                 cur_ptr->prev->next = cur_ptr->next;
         } else {
@@ -220,6 +241,7 @@ void remove_node_ll(Con_Linked_List_Node *cur_ptr, Con_Linked_List * target)
         }
 
         use_deallocator_ll(cur_ptr, target);
+        target->count--;
 }
 
 // private (should only be used within this translation unit)
@@ -284,12 +306,18 @@ Con_Linked_List init_linked_list(void *alloc_funtion, void *free_function, void 
 // private (should only be used within this translation unit)
 void recersive_insert_linked_list(Con_Linked_List_Node *node, Con_Linked_List_Node *cur_ptr, int position, Con_Linked_List *target)
 {
-        if (cur_ptr == (void *)0 || position < 0) {
+        if (position < 0) {
+                return;
+        }
+        if (cur_ptr->next == NULL && position == 1) {
+                add_node_ll(node, cur_ptr);
+                target->count++;
                 return;
         }
 
         if (position == 0) {
                 add_node_ll(node, cur_ptr);
+                target->count++;
                 return;
         }
 
@@ -358,6 +386,7 @@ void remove_linked_list(int position, Con_Linked_List *target)
                 return;
         }
 
+        if (target->count == 0) return;
         recersive_remove_linked_list(position, target->head, target);
         target->count--;
 }
@@ -458,49 +487,38 @@ void *pop_stack(Con_Stack *target)
  * queue
  * */
 
-Con_Queue init_queue(size_t known_size, void *alloc_funtion, void *free_function, void *allocator_struct)
+Con_Queue init_queue(void *alloc_funtion, void *free_function, void *allocator_struct)
 {
-        Con_Queue new_queue = {0};
-        if (known_size > 0) {
-                new_queue.underlaying_data_type = array;
-                new_queue.underlaying_data.array = init_dynamic_array(known_size, alloc_funtion, free_function, allocator_struct);
-        } else {
-                new_queue.underlaying_data_type = linked_list;
-                new_queue.underlaying_data.linked_list = init_linked_list(alloc_funtion, free_function, allocator_struct);
-        }
+        // array type not implemeted rn 
+        Con_Queue new_queue = {.end_node = NULL};
+        new_queue.underlaying_data_type = linked_list;
+        new_queue.underlaying_data.linked_list = init_linked_list(alloc_funtion, free_function, allocator_struct);
+        new_queue.end_node = new_queue.underlaying_data.linked_list.head;
         return new_queue;
 }
 
-void enqueue(void *data, Con_Queue *target)
+void push_queue(void *data, Con_Queue *queue)
 {
-        if (target->underlaying_data_type == array) {
-                random_insert_dynamic_array(target->underlaying_data.array.Cur_Items, data, target->underlaying_data.array.Block_Size, &target->underlaying_data.array);
-        } else {
-                if (target->underlaying_data.linked_list.head == (void *)0) {
-                        insert_linked_list(data, 0, &target->underlaying_data.linked_list);
-                } else {
-                        insert_linked_list(data, target->underlaying_data.linked_list.count, &target->underlaying_data.linked_list);
-                }
+        if (queue->underlaying_data.linked_list.head == (void *)0) {
+                insert_linked_list(data, 0, &queue->underlaying_data.linked_list);
+                queue->end_node = queue->underlaying_data.linked_list.head;
+                return;
         }
+
+        Con_Linked_List_Node *new_node = make_new_node(data, &queue->underlaying_data.linked_list);
+        add_node_ll(new_node, queue->end_node);
+        queue->end_node = new_node;
+        queue->underlaying_data.linked_list.count++;
 }
 
-void *dequeue(Con_Queue *target)
+void *pop_queue(Con_Queue *queue)
 {
-        if (target->underlaying_data_type == array) {
-                if (target->underlaying_data.array.Cur_Items == 0) {
-                        return (void *)0;
-                }
-                void *data = random_access_dynamic_array(target->underlaying_data.array.Cur_Items - 1, &target->underlaying_data.array);
-                target->underlaying_data.array.Cur_Items--;
-                return data;
-        } else {
-                if (target->underlaying_data.linked_list.head == (void *)0) {
-                        return (void *)0;
-                }
-                void *data = target->underlaying_data.linked_list.head->data;
-                remove_linked_list(0, &target->underlaying_data.linked_list);
-                return data;
+        void *out = random_access_linked_list(0, &queue->underlaying_data.linked_list);
+        remove_linked_list(0, &queue->underlaying_data.linked_list);
+        if (queue->underlaying_data.linked_list.head == (void *)0) {
+                queue->end_node = (void *)0;
         }
+        return out;
 }
 
 void *peek_queue(Con_Queue *target)

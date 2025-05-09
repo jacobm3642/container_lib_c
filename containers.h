@@ -13,12 +13,12 @@ typedef void Specific_Deallocator(void *ptr, void *allocator_struct);
 union Alloctaor {
         General_Allocator *general_allocator;
         Specific_Allocator *specific_allocator;
-} Alloctaor;
+};
 
 union Dealloctaor {
         General_Deallocator *general_deallocator;
         Specific_Deallocator *specific_deallocator;
-} Dealloctaor;
+};
 
 /*
  * ---- Dynamic array ----
@@ -65,7 +65,7 @@ typedef struct Con_Linked_List {
         
         Con_Linked_List_Node *head;
         Con_Linked_List_Node *sequential_access_ptr;
-        int count;
+        unsigned int count;
         
         union Alloctaor alloctaor;
         union Dealloctaor dealloctaor;
@@ -110,13 +110,15 @@ typedef struct Con_Queue {
                 Con_Linked_List linked_list;
                 Con_Dynamic_Array array;
         } underlaying_data;
+
+        Con_Linked_List_Node *end_node;
 } Con_Queue;
 
 Con_Queue init_queue(size_t known_size, void *alloc_funtion, void *free_function, void *allocator_struct);
-void enqueue(void *data, Con_Queue *target);
-void *dequeue(Con_Queue *target);
 void *peek_queue(Con_Queue *target);
 void free_queue(Con_Queue *target);
+void push_queue(void *data, Con_Queue *queue);
+void *pop_queue(Con_Queue *queue);
 
 /*
  * Hash Table
@@ -155,6 +157,5 @@ size_t hash_table_size(Con_Hash_Table* target);
 bool hash_table_contains_key(const void* key, size_t key_size, Con_Hash_Table* target);
 bool hash_table_is_empty(Con_Hash_Table* target);
 float hash_table_load(Con_Hash_Table* target);
-
 
 #endif // !CONTAINERS_H
