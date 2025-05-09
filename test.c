@@ -176,6 +176,199 @@ START_TEST(push_stack_test)
         ck_assert_int_eq(*(int *)example.tail_node->data, data1);
 } END_TEST
 
+START_TEST(queue_array_test)
+{
+        Con_Queue example = init_queue(sizeof(int), NULL, NULL, NULL);
+        int data1 = 42, data2 = 73, data3 = 99;
+
+        // Test enqueue
+        enqueue(&data1, &example);
+        enqueue(&data2, &example);
+        enqueue(&data3, &example);
+
+        // Test peek
+        int *peeked = (int *)peek_queue(&example);
+        ck_assert_int_eq(*peeked, 42);
+
+        // Test dequeue
+        int *dequeued = (int *)dequeue(&example);
+        ck_assert_int_eq(*dequeued, 42);
+        ck_assert_int_eq(example.underlaying_data.array.Cur_Items, 2);
+
+        // Test dequeue remaining items
+        dequeued = (int *)dequeue(&example);
+        ck_assert_int_eq(*dequeued, 73);
+        dequeued = (int *)dequeue(&example);
+        ck_assert_int_eq(*dequeued, 99);
+
+        // Test empty queue
+        dequeued = (int *)dequeue(&example);
+        ck_assert_ptr_eq(dequeued, (void *)0);
+
+        free_queue(&example);
+} END_TEST
+
+START_TEST(queue_linked_list_test)
+{
+        Con_Queue example = init_queue(0, NULL, NULL, NULL);
+        int data1 = 42, data2 = 73, data3 = 99;
+
+        // Test enqueue
+        enqueue(&data1, &example);
+        enqueue(&data2, &example);
+        enqueue(&data3, &example);
+
+        // Test peek
+        int *peeked = (int *)peek_queue(&example);
+        ck_assert_int_eq(*peeked, 42);
+
+        // Test dequeue
+        int *dequeued = (int *)dequeue(&example);
+        ck_assert_int_eq(*dequeued, 42);
+        ck_assert_int_eq(example.underlaying_data.linked_list.count, 2);
+
+        // Test dequeue remaining items
+        dequeued = (int *)dequeue(&example);
+        ck_assert_int_eq(*dequeued, 73);
+        dequeued = (int *)dequeue(&example);
+        ck_assert_int_eq(*dequeued, 99);
+
+        // Test empty queue
+        dequeued = (int *)dequeue(&example);
+        ck_assert_ptr_eq(dequeued, (void *)0);
+
+        free_queue(&example);
+} END_TEST
+
+START_TEST(queue_custom_allocator_test)
+{
+        // Test with custom allocator
+        Con_Queue example = init_queue(sizeof(int), malloc, free, NULL);
+        int data = 42;
+        
+        enqueue(&data, &example);
+        int *dequeued = (int *)dequeue(&example);
+        ck_assert_int_eq(*dequeued, 42);
+        
+        free_queue(&example);
+} END_TEST
+
+START_TEST(linked_list_empty_test)
+{
+        Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
+        ck_assert_ptr_eq(sequential_access_linked_list(&example), (void *)0);
+        ck_assert_ptr_eq(random_access_linked_list(0, &example), (void *)0);
+        ck_assert_int_eq(example.count, 0);
+        free_linked_list(&example);
+} END_TEST
+
+START_TEST(linked_list_insert_at_positions_test)
+{
+        Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
+        int data1 = 42, data2 = 73, data3 = 99, data4 = 123;
+        
+        insert_linked_list(&data1, 0, &example);
+        ck_assert_int_eq(*(int *)example.head->data, 42);
+        ck_assert_int_eq(example.count, 1);
+        
+        insert_linked_list(&data2, 1, &example);
+        ck_assert_int_eq(*(int *)example.head->next->data, 73);
+        ck_assert_int_eq(example.count, 2);
+        
+        insert_linked_list(&data3, 1, &example);
+        ck_assert_int_eq(*(int *)example.head->next->data, 99);
+        ck_assert_int_eq(*(int *)example.head->next->next->data, 73);
+        ck_assert_int_eq(example.count, 3);
+        
+        insert_linked_list(&data4, 10, &example);
+        ck_assert_int_eq(*(int *)example.head->next->next->next->data, 123);
+        ck_assert_int_eq(example.count, 4);
+        
+        free_linked_list(&example);
+} END_TEST
+
+START_TEST(linked_list_remove_test)
+{
+        Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
+        int data1 = 42, data2 = 73, data3 = 99;
+        
+        insert_linked_list(&data1, 0, &example);
+        insert_linked_list(&data2, 1, &example);
+        insert_linked_list(&data3, 2, &example);
+        
+        remove_linked_list(0, &example);
+        ck_assert_int_eq(*(int *)example.head->data, 73);
+        ck_assert_int_eq(example.count, 2);
+        
+        remove_linked_list(1, &example);
+        ck_assert_int_eq(*(int *)example.head->data, 73);
+        ck_assert_ptr_eq(example.head->next, (void *)0);
+        ck_assert_int_eq(example.count, 1);
+        
+        remove_linked_list(0, &example);
+        ck_assert_ptr_eq(example.head, (void *)0);
+        ck_assert_int_eq(example.count, 0);
+        
+        remove_linked_list(5, &example);
+        ck_assert_ptr_eq(example.head, (void *)0);
+        ck_assert_int_eq(example.count, 0);
+        
+        free_linked_list(&example);
+} END_TEST
+
+START_TEST(linked_list_sequential_access_test)
+{
+        Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
+        int data1 = 42, data2 = 73, data3 = 99;
+        
+        insert_linked_list(&data1, 0, &example);
+        insert_linked_list(&data2, 1, &example);
+        insert_linked_list(&data3, 2, &example);
+        
+        ck_assert_int_eq(*(int *)sequential_access_linked_list(&example), 42);
+        ck_assert_int_eq(*(int *)sequential_access_linked_list(&example), 73);
+        ck_assert_int_eq(*(int *)sequential_access_linked_list(&example), 99);
+        ck_assert_ptr_eq(sequential_access_linked_list(&example), (void *)0);
+        
+        reset_sequential_access_linked_list(&example);
+        ck_assert_int_eq(*(int *)sequential_access_linked_list(&example), 42);
+        
+        free_linked_list(&example);
+} END_TEST
+
+START_TEST(linked_list_random_access_test)
+{
+        Con_Linked_List example = init_linked_list(NULL, NULL, NULL);
+        int data1 = 42, data2 = 73, data3 = 99;
+        
+        insert_linked_list(&data1, 0, &example);
+        insert_linked_list(&data2, 1, &example);
+        insert_linked_list(&data3, 2, &example);
+        
+        ck_assert_int_eq(*(int *)random_access_linked_list(0, &example), 42);
+        ck_assert_int_eq(*(int *)random_access_linked_list(1, &example), 73);
+        ck_assert_int_eq(*(int *)random_access_linked_list(2, &example), 99);
+        
+        ck_assert_ptr_eq(random_access_linked_list(-1, &example), (void *)0);
+        ck_assert_ptr_eq(random_access_linked_list(3, &example), (void *)0);
+        
+        free_linked_list(&example);
+} END_TEST
+
+START_TEST(linked_list_custom_allocator_test)
+{
+        Con_Linked_List example = init_linked_list(malloc, free, NULL);
+        int data1 = 42, data2 = 73;
+        
+        insert_linked_list(&data1, 0, &example);
+        insert_linked_list(&data2, 1, &example);
+        
+        ck_assert_int_eq(*(int *)random_access_linked_list(0, &example), 42);
+        ck_assert_int_eq(*(int *)random_access_linked_list(1, &example), 73);
+        
+        free_linked_list(&example);
+} END_TEST
+
 Suite *container_test_suite()
 {
         Suite *s;
@@ -197,7 +390,15 @@ Suite *container_test_suite()
         tcase_add_test(tc, random_access_linked_list_test);
         tcase_add_test(tc, sequential_access_dynamic_array_test);
         tcase_add_test(tc, push_stack_test);
-        
+        tcase_add_test(tc, queue_array_test);
+        tcase_add_test(tc, queue_linked_list_test);
+        tcase_add_test(tc, queue_custom_allocator_test);
+        tcase_add_test(tc, linked_list_empty_test);
+        tcase_add_test(tc, linked_list_insert_at_positions_test);
+        tcase_add_test(tc, linked_list_remove_test);
+        tcase_add_test(tc, linked_list_sequential_access_test);
+        tcase_add_test(tc, linked_list_random_access_test);
+        tcase_add_test(tc, linked_list_custom_allocator_test);
 
         suite_add_tcase(s, tc);
 

@@ -2,6 +2,7 @@
 #define CONTAINERS_H
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef void *General_Allocator(size_t blob_size);
 typedef void *Specific_Allocator(size_t blob_size, void *allocator_struct);
@@ -110,5 +111,50 @@ typedef struct Con_Queue {
                 Con_Dynamic_Array array;
         } underlaying_data;
 } Con_Queue;
+
+Con_Queue init_queue(size_t known_size, void *alloc_funtion, void *free_function, void *allocator_struct);
+void enqueue(void *data, Con_Queue *target);
+void *dequeue(Con_Queue *target);
+void *peek_queue(Con_Queue *target);
+void free_queue(Con_Queue *target);
+
+/*
+ * Hash Table
+ * */
+
+#define HASH_EMPTY 0  // Empty slot
+#define HASH_DELETED 1  // Deleted slot
+#define HASH_OCCUPIED 2  // Occupied slot
+
+typedef struct Con_Hash_Entry {
+    void* key;
+    size_t key_size;
+    void* value;
+    uint8_t status; // HASH_EMPTY, HASH_DELETED, or HASH_OCCUPIED
+} Con_Hash_Entry;
+
+typedef struct Con_Hash_Table {
+    Con_Dynamic_Array entries;  // Array of Con_Hash_Entry
+    size_t capacity;           // Total capacity of the hash table
+    size_t size;               // Current number of elements
+    float load_factor;         // Maximum load factor before resize (typically 0.75)
+    bool use_general_allocator;
+    union Alloctaor allocator;
+    union Dealloctaor deallocator;
+    void* allocator_struct;
+} Con_Hash_Table;
+
+Con_Hash_Table init_hash_table(size_t initial_capacity, float load_factor, void* alloc_function, void* free_function, void* allocator_struct);
+void hash_table_insert(const void* key, size_t key_size, void* value, Con_Hash_Table* target);
+void* hash_table_lookup(const void* key, size_t key_size, Con_Hash_Table* target);
+bool hash_table_remove(const void* key, size_t key_size, Con_Hash_Table* target);
+void hash_table_clear(Con_Hash_Table* target);
+void free_hash_table(Con_Hash_Table* target);
+
+size_t hash_table_size(Con_Hash_Table* target);
+bool hash_table_contains_key(const void* key, size_t key_size, Con_Hash_Table* target);
+bool hash_table_is_empty(Con_Hash_Table* target);
+float hash_table_load(Con_Hash_Table* target);
+
 
 #endif // !CONTAINERS_H

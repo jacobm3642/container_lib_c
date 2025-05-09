@@ -10,13 +10,13 @@ TODO:
 - [x] Dynamic Array
 - [x] Linked List
 - [x] Stack
-- [ ] Queue
+- [x] Queue
 - [ ] Deque
 - [ ] Priority Queue
 - [ ] Tree
 - [ ] Binary Search Tree
 - [ ] Binary Heap
-- [ ] Dictionary
+- [x] Dictionary (hash table)
 - [ ] Set
 - [ ] Graph
 - [ ] Directed Acyclic Graph 
